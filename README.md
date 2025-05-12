@@ -2,6 +2,9 @@
 
 This module provides integration between the Smart Logistics Bot and Firebase Realtime Database for tracking the bot's location and material counts.
 
+![image](https://github.com/user-attachments/assets/22d4d346-caed-408b-8922-caa9bf26603c)
+
+
 ## Setup Instructions
 
 ### 1. Firebase Setup
@@ -89,5 +92,8 @@ The Firebase Realtime Database will have the following structure:
 - Basavaraj Kallapur
 - Bhavana Yadav
 - C Harsha
+
+  ![6cf7dbbc-66d3-41ee-8e91-9fa3cfd6c397](https://github.com/user-attachments/assets/c0c8e6c4-8669-4ee8-87bc-5ca6bb368670)
+
 
 
