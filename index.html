@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logistics Bot Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <style>
+        body {
+            overflow-x: hidden;
+        }
+        .chart-container {
+            height: 250px;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <!-- Navigation Bar -->
+    <nav class="bg-gray-800 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 flex items-center">
+                        <svg class="h-8 w-8 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+                        </svg>
+                        <span class="ml-2 text-white text-lg font-semibold">Smart Logistics Bot</span>
+                    </div>
+                </div>
+                <div class="flex items-center">
+                    <div class="text-white text-sm">
+                        <span id="status-indicator" class="inline-block h-3 w-3 rounded-full bg-green-500"></span>
+                        <span class="ml-1">System Online</span>
+                    </div>
+                    <div class="ml-4 text-white">
+                        <span id="current-time" class="text-sm">--:--:--</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mx-auto px-4 py-8">
+        <header class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-800">Smart Logistics Bot Dashboard</h1>
+            <p class="text-gray-600">Real-time monitoring and inventory management</p>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <!-- Bot Location Status -->
+            <div class="col-span-1 md:col-span-3 bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-semibold mb-4">Bot Location</h2>
+                <div id="location-tracker" class="flex justify-between items-center">
+                    <div id="start-point" class="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center relative">
+                        <span class="text-blue-800 font-bold">Start</span>
+                        <div id="start-indicator" class="hidden absolute -top-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-white"></div>
+                    </div>
+                    <div class="w-full max-w-20 h-1 bg-gray-300"></div>
+                    <div id="building-a" class="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center relative">
+                        <span class="text-blue-800 font-bold">Bldg A</span>
+                        <div id="a-indicator" class="hidden absolute -top-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-white"></div>
+                    </div>
+                    <div class="w-full max-w-20 h-1 bg-gray-300"></div>
+                    <div id="building-b" class="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center relative">
+                        <span class="text-blue-800 font-bold">Bldg B</span>
+                        <div id="b-indicator" class="hidden absolute -top-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-white"></div>
+                    </div>
+                    <div class="w-full max-w-20 h-1 bg-gray-300"></div>
+                    <div id="building-c" class="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center relative">
+                        <span class="text-blue-800 font-bold">Bldg C</span>
+                        <div id="c-indicator" class="hidden absolute -top-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-white"></div>
+                    </div>
+                </div>
+                <div class="mt-4 text-center">
+                    <p class="text-gray-700">Current Location: <span id="current-location" class="font-semibold">Start</span></p>
+                    <p class="text-gray-700">Last Updated: <span id="last-update" class="font-semibold">-</span></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <!-- Material Categories -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-lg font-semibold mb-3 text-green-700">Dispatch Ready</h2>
+                <div class="flex items-end justify-between">
+                    <div class="text-4xl font-bold text-green-600" id="dispatch-count">0</div>
+                    <div class="text-green-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-lg font-semibold mb-3 text-red-700">Damaged Items</h2>
+                <div class="flex items-end justify-between">
+                    <div class="text-4xl font-bold text-red-600" id="damaged-count">0</div>
+                    <div class="text-red-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-lg font-semibold mb-3 text-purple-700">eWaste</h2>
+                <div class="flex items-end justify-between">
+                    <div class="text-4xl font-bold text-purple-600" id="ewaste-count">0</div>
+                    <div class="text-purple-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-lg font-semibold mb-3 text-blue-700">Raw Materials</h2>
+                <div class="flex items-end justify-between">
+                    <div class="text-4xl font-bold text-blue-600" id="raw-count">0</div>
+                    <div class="text-blue-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <!-- Charts -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-semibold mb-4">Material Detection History</h2>
+                <div class="chart-container">
+                    <canvas id="materials-chart"></canvas>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-semibold mb-4">Distribution by Category</h2>
+                <div class="chart-container">
+                    <canvas id="distribution-chart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Test Controls (for development only) -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <h2 class="text-xl font-semibold mb-4">Test Controls</h2>
+            <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-bold mb-2">Simulate Bot Location</label>
+                <div class="flex space-x-2">
+                    <button id="loc-start" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition-all duration-200 hover:shadow-lg transform hover:-translate-y-1">
+                        Start
+                    </button>
+                    <button id="loc-a" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition-all duration-200 hover:shadow-lg transform hover:-translate-y-1">
+                        Building A
+                    </button>
+                    <button id="loc-b" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition-all duration-200 hover:shadow-lg transform hover:-translate-y-1">
+                        Building B
+                    </button>
+                    <button id="loc-c" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition-all duration-200 hover:shadow-lg transform hover:-translate-y-1">
+                        Building C
+                    </button>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Dispatch Ready</label>
+                    <input id="test-dispatch" type="number" min="0" value="0" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                </div>
+                <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Damaged Items</label>
+                    <input id="test-damaged" type="number" min="0" value="0" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                </div>
+                <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-2">eWaste</label>
+                    <input id="test-ewaste" type="number" min="0" value="0" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                </div>
+                <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Raw Materials</label>
+                    <input id="test-raw" type="number" min="0" value="0" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                </div>
+            </div>
+            <div class="mt-4">
+                <button id="update-materials" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded transition-all duration-200 hover:shadow-lg transform hover:-translate-y-1 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    Update Materials
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html> 
