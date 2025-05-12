@@ -79,4 +79,15 @@ The Firebase Realtime Database will have the following structure:
 - If the bot can't connect to Firebase, it will log data locally to `material_logs.txt`
 - Make sure `serviceAccountKey.json` is in the correct location
 - Check your internet connection
-- Verify that your Firebase project is properly set up with Realtime Database enabled 
+- Verify that your Firebase project is properly set up with Realtime Database enabled
+
+---
+
+## 👥 Team Members
+
+- Abhilash Dandu
+- Basavaraj Kallapur
+- Bhavana Yadav
+- C Harsha
+
+
